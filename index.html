@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galaxy (BETA)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Poppins", sans-serif;
+            background: #000 url('https://i.imgur.com/S9v51ny.gif') no-repeat center center;
+            background-size: cover;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #fff;
+            border-top: 5px solid #00ff00;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .content {
+            padding: 20px;
+        }
+        .content h3 {
+            font-family: "Poppins", sans-serif;
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .wallet-section {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .wallet-section .header {
+            font-family: "Poppins", sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.2;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .wallet-section .connect-button {
+            font-family: "Poppins", sans-serif;
+            padding: 12px 24px;
+            background-color: #fff;
+            color: #000;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+        }
+        .wallet-section .connect-button:hover {
+            transform: scale(1.05);
+        }
+        .wallet-section .points-value {
+            font-family: "Poppins", sans-serif;
+            background-color: #333;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            align-self: flex-end;
+            margin-bottom: 20px;
+        }
+        .wallet-section .wallet-content {
+            width: 90%;
+            padding: 15px;
+            background-color: #fff;
+            color: #000;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .wallet-section .wallet-content p {
+            margin: 0;
+            font-size: 16px;
+            font-family: "Poppins", sans-serif;
+        }
+        .planet-section {
+            background-color: #fff;
+            color: #000;
+            font-family: "Poppins", sans-serif;
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+            width: 100%;
+            height: 150px;
+        }
+        .planet-section .info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .planet-section .info img {
+            width: 40px;
+            height: 40px;
+        }
+        .planet-section .action button {
+            font-family: "Poppins", sans-serif;
+            padding: 10px 20px;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .planet-section .action button:hover {
+            transform: scale(1.05);
+        }
+        #game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        #game-area {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #pixel-galaxy {
+            width: 500px;
+            height: 500px;
+            background: url('https://i.imgur.com/IbmV3Hm.png') no-repeat center center;
+            background-size: contain;
+            cursor: pointer;
+        }
+        #pixel-galaxy.spinning {
+            animation: rotate 5s linear infinite;
+        }
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #game-score {
+            font-family: "Poppins", sans-serif;
+            margin: 10px 0;
+            font-size: 20px;
+        }
+        #timer {
+            font-family: "Poppins", sans-serif;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        #close-game {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        #play-again {
+            font-family: "Poppins", sans-serif;
+            padding: 12px 24px;
+            background-color: #fff;
+            color: #000;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+            transition: transform 0.2s;
+        }
+        #play-again:hover {
+            transform: scale(1.05);
+        }
+        .task-item {
+            background-color: #fff;
+            color: #000;
+            font-family: "Poppins", sans-serif;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .task-item.completed {
+            background-color: #ccc;
+        }
+        .task-item button {
+            font-family: "Poppins", sans-serif;
+            padding: 8px 16px;
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .task-item.completed button {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+        .referral-section {
+            background-color: #fff;
+            color: #000;
+            font-family: "Poppins", sans-serif;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .referral-section p {
+            margin: 0 0 10px;
+            font-size: 14px;
+        }
+        .referral-section button {
+            font-family: "Poppins", sans-serif;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #00ff00, #00b7ff);
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .referral-section button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+        .wallet-status {
+            font-size: 12px;
+            color: #00ff00;
+            margin-top: 5px;
+        }
+        #share-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+        .modal-content {
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            width: 300px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        .modal-content p {
+            color: #fff;
+            margin: 0 0 15px;
+            font-size: 16px;
+        }
+        .share-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .share-buttons a {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background-size: cover;
+            transition: transform 0.2s;
+        }
+        .share-buttons a:hover {
+            transform: scale(1.1);
+        }
+        .telegram { background: url('https://cdn-icons-png.flaticon.com/512/2111/2111728.png') no-repeat center; }
+        .whatsapp { background: url('https://cdn-icons-png.flaticon.com/512/733/733585.png') no-repeat center; }
+        .twitter { background: url('https://cdn-icons-png.flaticon.com/512/733/733579.png') no-repeat center; }
+        #copy-link-btn {
+            margin-top: 15px;
+            padding: 8px 16px;
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        #copy-link-btn.copied {
+            background-color: #00b7ff;
+        }
+        #close-modal {
+            margin-top: 10px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingScreen">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <div class="content">
+        <h3>Galaxy Map</h3>
+        <div class="planet-section">
+            <div class="info">
+                <img src="https://cdn-icons-png.flaticon.com/512/124/124560.png" alt="Mars">
+                <div>
+                    <span>Mars Kanyonu</span>
+                    <p id="energy-display">Energy: 50</p>
+                </div>
+            </div>
+            <div class="action">
+                <button onclick="openGame('mars')">Explore</button>
+            </div>
+        </div>
+        <div class="planet-section">
+            <div class="info">
+                <img src="https://cdn-icons-png.flaticon.com/512/124/124574.png" alt="Neptün">
+                <div>
+                    <span>Neptün Bulutsusu</span>
+                    <p>Locked (Complete Mars)</p>
+                </div>
+            </div>
+            <div class="action">
+                <button disabled>Explore</button>
+            </div>
+        </div>
+
+        <div class="wallet-section">
+            <div class="points-value">$0</div>
+            <div class="header">
+                Get real crypto.<br>Earn and buy any tokens.
+            </div>
+            <button class="connect-button" onclick="connectWallet()">Connect TON Wallet</button>
+            <p class="wallet-status" id="wallet-status">Wallet not connected</p>
+            <div class="wallet-content">
+                <p>Total Glax: <span id="total-glax">0</span></p>
+            </div>
+        </div>
+
+        <h3>Tasks & Quests</h3>
+        <div class="task-item" id="task-1">
+            <div class="info">
+                <span>Explore Mars Kanyonu</span>
+            </div>
+            <button onclick="completeTask('task-1')">Claim Reward</button>
+        </div>
+        <div class="task-item" id="task-2">
+            <div class="info">
+                <span>Invite a friend</span>
+            </div>
+            <button onclick="completeTask('task-2')">Claim Reward</button>
+        </div>
+
+        <h3>Frens</h3>
+        <div class="referral-section">
+            <p>Invite friends and earn bonus Glax!</p>
+            <button onclick="openShareModal()">Share Invite</button>
+        </div>
+    </div>
+
+    <div id="game-overlay">
+        <button id="close-game" onclick="closeGame()">✖</button>
+        <h3 id="planet-name">Spinning the Galaxy...</h3>
+        <p>Hold the galaxy to spin and earn Glax!</p>
+        <div id="game-area">
+            <div id="pixel-galaxy"></div>
+        </div>
+        <p id="game-score">Glax: 0</p>
+        <p id="timer">Time Left: 30s</p>
+        <button id="play-again" onclick="resetGame()">Play Again</button>
+    </div>
+
+    <div id="share-modal">
+        <div class="modal-content">
+            <p>Share your invite link!</p>
+            <div class="share-buttons">
+                <a href="#" id="telegram-share" class="telegram" onclick="shareOnTelegram()"></a>
+                <a href="#" id="whatsapp-share" class="whatsapp" onclick="shareOnWhatsApp()"></a>
+                <a href="#" id="twitter-share" class="twitter" onclick="shareOnTwitter()"></a>
+            </div>
+            <button id="copy-link-btn" onclick="copyLink()">Copy Link</button>
+            <button id="close-modal" onclick="closeShareModal()">✖</button>
+        </div>
+    </div>
+
+    <script>
+        const tonConnectUI = new TONConnectUI({
+            manifestUrl: 'https://KULLANICI_ADIN.github.io/galaxy-beta/tonconnect-manifest.json' // GitHub Pages URL’ni buraya koy
+        });
+
+        const TOTAL_SUPPLY = 50000000;
+        const AIRDROP_TOTAL = 15000000;
+        const AIRDROP_MINIGAME = 7500000;
+        const AIRDROP_INVITE = 7500000;
+        let minigameAirdropRemaining = AIRDROP_MINIGAME;
+        let inviteAirdropRemaining = AIRDROP_INVITE;
+
+        let energy = 50;
+        let totalGlax = 0;
+        let referralCount = 0;
+        let hasExploredMars = false;
+        let gameActive = false;
+        let currentPlanet = '';
+        let glaxEarned = 0;
+        let timeLeft = 30;
+        let lastPlayed = localStorage.getItem("lastPlayed") || 0;
+        const COOLDOWN = 8 * 60 * 60 * 1000;
+
+        const loadingScreen = document.getElementById("loadingScreen");
+        const energyDisplay = document.getElementById("energy-display");
+        const gameOverlay = document.getElementById("game-overlay");
+        const gameArea = document.getElementById("game-area");
+        const pixelGalaxy = document.getElementById("pixel-galaxy");
+        const gameScoreDisplay = document.getElementById("game-score");
+        const timerDisplay = document.getElementById("timer");
+        const playAgainButton = document.getElementById("play-again");
+        const totalGlaxDisplay = document.getElementById("total-glax");
+        const planetNameDisplay = document.getElementById("planet-name");
+        const shareModal = document.getElementById("share-modal");
+        const copyLinkBtn = document.getElementById("copy-link-btn");
+        const walletStatus = document.getElementById("wallet-status");
+
+        function initializeApp() {
+            loadGameData();
+            checkDailyLogin();
+            checkWalletConnection();
+            updateDisplay();
+            loadingScreen.style.display = "none";
+        }
+
+        async function connectWallet() {
+            try {
+                await tonConnectUI.connectWallet();
+                const wallet = tonConnectUI.wallet;
+                if (wallet) {
+                    console.log("Cüzdan bağlandı:", wallet);
+                    walletStatus.textContent = `Connected: ${wallet.account.address.slice(0, 6)}...`;
+                }
+                updateDisplay();
+            } catch (e) {
+                console.error("Bağlantı hatası:", e);
+                walletStatus.textContent = "Connection failed";
+            }
+        }
+
+        function checkWalletConnection() {
+            if (tonConnectUI.wallet) {
+                console.log("Cüzdan bağlı:", tonConnectUI.wallet);
+                walletStatus.textContent = `Connected: ${tonConnectUI.wallet.account.address.slice(0, 6)}...`;
+            } else {
+                console.log("Cüzdan bağlı değil.");
+            }
+        }
+
+        function updateDisplay() {
+            energyDisplay.textContent = `Energy: ${energy}`;
+            totalGlaxDisplay.textContent = totalGlax.toFixed(1);
+            if (!tonConnectUI.wallet) walletStatus.textContent = "Wallet not connected";
+        }
+
+        function checkCooldown() {
+            const now = Date.now();
+            const timeSinceLastPlayed = now - lastPlayed;
+            if (timeSinceLastPlayed < COOLDOWN) {
+                const remainingTime = COOLDOWN - timeSinceLastPlayed;
+                const hours = Math.floor(remainingTime / (1000 * 60 * 60));
+                const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                console.log(`Mini oyunu tekrar oynamak için ${hours} saat ${minutes} dakika beklemelisin!`);
+                return false;
+            }
+            return true;
+        }
+
+        function openGame(planet) {
+            if (energy < 10) return;
+            if (!checkCooldown()) return;
+            currentPlanet = planet;
+            planetNameDisplay.textContent = `Spinning the Galaxy in ${planet === 'mars' ? 'Mars Kanyonu' : 'Neptün Bulutsusu'}`;
+            energy -= 10;
+            hasExploredMars = true;
+            updateDisplay();
+            gameOverlay.style.display = "flex";
+            startGame();
+        }
+
+        function closeGame() {
+            clearInterval(gameInterval);
+            clearInterval(rewardInterval);
+            gameOverlay.style.display = "none";
+            playAgainButton.style.display = "none";
+            gameActive = false;
+            pixelGalaxy.classList.remove("spinning");
+            pixelGalaxy.removeEventListener("mousedown", startSpinning);
+            pixelGalaxy.removeEventListener("mouseup", stopSpinning);
+            pixelGalaxy.removeEventListener("touchstart", startSpinning);
+            pixelGalaxy.removeEventListener("touchend", stopSpinning);
+            totalGlax += glaxEarned;
+            lastPlayed = Date.now();
+            localStorage.setItem("lastPlayed", lastPlayed);
+            saveGameData();
+            updateDisplay();
+            glaxEarned = 0;
+            gameScoreDisplay.textContent = `Glax: ${glaxEarned.toFixed(1)}`;
+        }
+
+        let gameInterval, rewardInterval;
+        function startGame() {
+            glaxEarned = 0;
+            timeLeft = 30;
+            gameScoreDisplay.textContent = `Glax: ${glaxEarned.toFixed(1)}`;
+            timerDisplay.textContent = `Time Left: ${timeLeft}s`;
+            playAgainButton.style.display = "none";
+            gameActive = true;
+            pixelGalaxy.addEventListener("mousedown", startSpinning);
+            pixelGalaxy.addEventListener("mouseup", stopSpinning);
+            pixelGalaxy.addEventListener("touchstart", startSpinning);
+            pixelGalaxy.addEventListener("touchend", stopSpinning);
+            gameInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `Time Left: ${timeLeft}s`;
+                if (timeLeft <= 0) closeGame();
+            }, 1000);
+        }
+
+        function startSpinning() {
+            if (!gameActive) return;
+            pixelGalaxy.classList.add("spinning");
+            rewardInterval = setInterval(() => {
+                if (minigameAirdropRemaining > 0) {
+                    let randomReward = Math.floor(Math.random() * 5) + 1;
+                    if (randomReward > minigameAirdropRemaining) randomReward = minigameAirdropRemaining;
+                    glaxEarned += randomReward;
+                    minigameAirdropRemaining -= randomReward;
+                    gameScoreDisplay.textContent = `Glax: ${glaxEarned.toFixed(1)}`;
+                } else {
+                    clearInterval(rewardInterval);
+                }
+            }, 1000);
+        }
+
+        function stopSpinning() {
+            if (!gameActive) return;
+            pixelGalaxy.classList.remove("spinning");
+            clearInterval(rewardInterval);
+        }
+
+        function resetGame() {
+            if (energy < 10) return;
+            if (!checkCooldown()) return;
+            energy -= 10;
+            updateDisplay();
+            playAgainButton.style.display = "none";
+            startGame();
+        }
+
+        function checkDailyLogin() {
+            const userId = 'guest';
+            const lastLogin = localStorage.getItem(`lastLogin_${userId}`);
+            const today = new Date().toISOString().split('T')[0];
+            let loginStreak = parseInt(localStorage.getItem(`loginStreak_${userId}`)) || 0;
+            let lastLoginDate = localStorage.getItem(`lastLoginDate_${userId}`);
+            const lastDate = lastLoginDate ? new Date(lastLoginDate) : new Date();
+            const currentDate = new Date(today);
+            const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+            if (diffDays > 1) loginStreak = 0;
+            if (lastLogin !== today) {
+                loginStreak++;
+                localStorage.setItem(`lastLogin_${userId}`, today);
+                localStorage.setItem(`lastLoginDate_${userId}`, today);
+                localStorage.setItem(`loginStreak_${userId}`, loginStreak);
+                let energyToAdd = loginStreak >= 4 ? 20 : 10;
+                energy += energyToAdd;
+                if (energy > 100) energy = 100;
+                updateDisplay();
+            }
+        }
+
+        function completeTask(taskId) {
+            const taskElement = document.getElementById(taskId);
+            if (taskElement.classList.contains('completed')) return;
+            if (taskId === 'task-1' && !hasExploredMars) return;
+            if (taskId === 'task-2' && referralCount === 0) return;
+            taskElement.classList.add('completed');
+            taskElement.querySelector('button').textContent = "Completed";
+            totalGlax += 50;
+            saveGameData();
+            updateDisplay();
+        }
+
+        const referralLink = `https://t.me/galaxy_gwi_storybot?start=guest`;
+        function openShareModal() {
+            shareModal.style.display = "flex";
+        }
+
+        function closeShareModal() {
+            shareModal.style.display = "none";
+        }
+
+        function shareOnTelegram() {
+            window.open(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=Join Galaxy (BETA) and earn Glax!`, '_blank');
+        }
+
+        function shareOnWhatsApp() {
+            window.open(`https://api.whatsapp.com/send?text=Join Galaxy (BETA) and earn Glax! ${referralLink}`, '_blank');
+        }
+
+        function shareOnTwitter() {
+            window.open(`https://twitter.com/intent/tweet?text=Join Galaxy (BETA) and earn Glax!&url=${encodeURIComponent(referralLink)}`, '_blank');
+        }
+
+        function copyLink() {
+            navigator.clipboard.writeText(referralLink).then(() => {
+                copyLinkBtn.textContent = "Copied!";
+                copyLinkBtn.classList.add("copied");
+                setTimeout(() => {
+                    copyLinkBtn.textContent = "Copy Link";
+                    copyLinkBtn.classList.remove("copied");
+                }, 2000);
+            });
+        }
+
+        function checkReferral() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const referrerId = urlParams.get('start');
+            if (referrerId && referrerId !== 'guest' && inviteAirdropRemaining >= 30) {
+                referralCount++;
+                totalGlax += 10;
+                inviteAirdropRemaining -= 30;
+                saveGameData();
+                updateDisplay();
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        function saveGameData() {
+            localStorage.setItem("totalGlax", totalGlax);
+            localStorage.setItem("energy", energy);
+            localStorage.setItem("referralCount", referralCount);
+            localStorage.setItem("minigameAirdropRemaining", minigameAirdropRemaining);
+            localStorage.setItem("inviteAirdropRemaining", inviteAirdropRemaining);
+        }
+
+        function loadGameData() {
+            totalGlax = parseFloat(localStorage.getItem("totalGlax")) || 0;
+            energy = parseInt(localStorage.getItem("energy")) || 50;
+            referralCount = parseInt(localStorage.getItem("referralCount")) || 0;
+            minigameAirdropRemaining = parseInt(localStorage.getItem("minigameAirdropRemaining")) || AIRDROP_MINIGAME;
+            inviteAirdropRemaining = parseInt(localStorage.getItem("inviteAirdropRemaining")) || AIRDROP_INVITE;
+            lastPlayed = parseInt(localStorage.getItem("lastPlayed")) || 0;
+            updateDisplay();
+        }
+
+        initializeApp();
+        checkReferral();
+    </script>
+</body>
+</html>
